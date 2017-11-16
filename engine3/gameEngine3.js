@@ -812,31 +812,34 @@ function parseText(jsonNode, sceneNode)
 
 function parseObject(jsonNode, sceneNode)
 {
-	// get the material
+		//Gets the material and url of the model
 	var material = parseMaterial(jsonNode["material"]);
-	
-	// get the url
-	var objURL = jsonNode["url"];
-	
-	// instantiate a loader
-	var loader = new THREE.OBJLoader();
+    var modelURL = jsonNode["url"];
 
-	// load a resource
-	loader.load(
-		// resource URL
-		objURL,
-		// called when resource is loaded
-		function (obj) {
-			
-			// apply material to obj
-			obj.traverse( function ( child )
-			{
-				child.material = material;
-			});
-		
-			sceneNode.add( obj );
-		}
-	);
+    //Traverses and loads the mesh, then adds it to model.
+    var onLoad = function(mesh) {
+        mesh.traverse(onTraverse);
+        sceneNode.add(mesh);
+        parseSceneNode(jsonNode, mesh);
+    }
+	//Adds material to model.
+    var onTraverse = function (child) {
+        if (child instanceof THREE.Mesh) {
+            child.material = material;
+        }
+    };
+	//Fails 
+    var onProgress = function (x) {
+        // nothing
+    };
+	//Error message
+    var onError = function (x) { 
+        debug("Error! could not load " + modelURL);
+    };
+
+    //Loads the completed model.
+    var loader = new THREE.OBJLoader(loadingManager);
+    loader.load(modelURL, onLoad, onProgress, onError);
 }
 
 function parseSprite(jsonNode)
